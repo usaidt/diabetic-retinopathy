@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetic Retinopathy Detection</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .upload-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .result-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        .uploaded-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .test-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .test-image-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .test-image-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .test-image-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .label-badge {
+            font-size: 1.1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin: 0.5rem;
+            display: inline-block;
+        }
+        .original-label {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+        }
+        .predicted-label {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1 class="text-center mb-4">Diabetic Retinopathy Detection</h1>
+        
+        <div class="upload-section">
+            <h3 class="mb-4">Upload an Image</h3>
+            <form action="/" method="post" enctype="multipart/form-data" class="mb-4">
+                <div class="mb-3">
+                    <input class="form-control" type="file" name="image" accept="image/*" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Analyze Image</button>
+            </form>
+
+            <h4 class="mb-3">Or try one of our test images:</h4>
+            <div class="test-images">
+                <div class="test-image-card" onclick="submitTestImage('10013_left_LABEL_0.jpeg')">
+                    <img src="/static/uploads/10013_left_LABEL_0.jpeg" alt="No DR">
+                    <p class="mt-2 mb-0">No DR</p>
+                </div>
+                <div class="test-image-card" onclick="submitTestImage('10030_right_LABEL_1.jpeg')">
+                    <img src="/static/uploads/10030_right_LABEL_1.jpeg" alt="Mild">
+                    <p class="mt-2 mb-0">Mild</p>
+                </div>
+                <div class="test-image-card" onclick="submitTestImage('10043_right_LABEL_2.jpeg')">
+                    <img src="/static/uploads/10043_right_LABEL_2.jpeg" alt="Moderate">
+                    <p class="mt-2 mb-0">Moderate</p>
+                </div>
+                <div class="test-image-card" onclick="submitTestImage('1002_left_LABEL_3.jpeg')">
+                    <img src="/static/uploads/1002_left_LABEL_3.jpeg" alt="Severe">
+                    <p class="mt-2 mb-0">Severe</p>
+                </div>
+                <div class="test-image-card" onclick="submitTestImage('10017_left_LABEL_4.jpeg')">
+                    <img src="/static/uploads/10017_left_LABEL_4.jpeg" alt="Proliferative DR">
+                    <p class="mt-2 mb-0">Proliferative DR</p>
+                </div>
+            </div>
+        </div>
+
+        {% if image_url %}
+        <div class="result-section">
+            <h3 class="mb-4">Analysis Results</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <img src="{{ image_url }}" alt="Uploaded Image" class="uploaded-image">
+                    <p class="text-muted">Filename: {{ image_name }}</p>
+                </div>
+                <div class="col-md-6 d-flex flex-column justify-content-center">
+                    {% if original_label %}
+                    <div class="label-badge original-label">
+                        Original Label: {{ original_label }}
+                    </div>
+                    {% endif %}
+                    {% if predicted_label %}
+                    <div class="label-badge predicted-label">
+                        Predicted Label: {{ predicted_label }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS and Form submission script -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function submitTestImage(filename) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.enctype = 'multipart/form-data';
+            
+            const formData = new FormData();
+            fetch('/static/uploads/' + filename)
+                .then(response => response.blob())
+                .then(blob => {
+                    const file = new File([blob], filename, { type: 'image/jpeg' });
+                    formData.append('image', file);
+                    fetch('/', {
+                        method: 'POST',
+                        body: formData
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                });
+        }
+    </script>
+</body>
+</html>

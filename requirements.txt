@@ -1,1 +1,13 @@
-Flask==3.0.3
+flask==3.0.2
+onnxruntime==1.17.0
+pillow==10.2.0
+torch==2.2.0
+torchvision==0.17.0
+numpy==1.26.4
+seaborn
+tqdm
+onnx
+matplotlib
+pandas
+scikit-learn
+scipy
