@@ -1,9 +1,10 @@
 flask==3.0.2
-onnxruntime==1.17.0
-pillow==10.2.0
-torch==2.2.0
-torchvision
+gunicorn==21.2.0
 numpy==1.26.4
+onnxruntime==1.17.0
+Pillow==10.2.0
+torch==2.2.1
+torchvision==0.17.1
 seaborn
 tqdm
 onnx

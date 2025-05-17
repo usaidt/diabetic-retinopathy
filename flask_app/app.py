@@ -8,16 +8,19 @@ import random
 from flask import Flask, render_template, request, redirect, jsonify
 from torchvision import transforms
 from PIL import Image
+from werkzeug.utils import secure_filename
 
 # Encoding dictionary
 encoding = {0: 'No_Dr', 1: 'Mild', 2: 'Moderate', 3: 'Severe', 4: 'Proliferative DR'}
 
 app = Flask(__name__)
 
-# Create an "uploads" folder if it doesn't exist
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "static", "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+# Configure app for production
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), "static", "uploads")
+
+# Create uploads folder if it doesn't exist
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 # Load ONNX Model
 onnx_model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "model", "efficientnet_b4_best.onnx")
@@ -118,22 +121,24 @@ def index():
             return redirect(request.url)
         
         if file:
-            file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+            # Secure the filename
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(file_path)  # Save image
 
             # Extract original label from filename
-            original_label = extract_original_label(file.filename)
+            original_label = extract_original_label(filename)
 
             # Get model prediction and thinking process
             predicted_label, thinking_process = predict(file_path)
-            print(f"Processing uploaded image: {file.filename}")
+            print(f"Processing uploaded image: {filename}")
             print(f"Original label: {original_label}")
             print(f"Predicted label: {predicted_label}")
             print(f"Thinking process: {thinking_process}")
             
             return render_template("index.html", 
-                                image_url=f"/static/uploads/{file.filename}",
-                                image_name=file.filename,  
+                                image_url=f"/static/uploads/{filename}",
+                                image_name=filename,  
                                 original_label=original_label,
                                 predicted_label=predicted_label,
                                 thinking_process=thinking_process)
@@ -145,5 +150,20 @@ def index():
                          predicted_label=None,
                          thinking_process=None)
 
+# Error handlers
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return "File too large. Maximum size is 16MB.", 413
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return "Page not found.", 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return "Internal server error.", 500
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Use environment variable for port if available (for Render)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
